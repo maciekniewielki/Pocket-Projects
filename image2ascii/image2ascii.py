@@ -4,8 +4,11 @@ import numpy as np
 
 class Charset:
 
-	def __init__(self, chars, upper_bounds=None):
-		if upper_bounds is None:
+	def __init__(self, chars=None, upper_bounds=None):
+		if chars is None:
+			chars = "@#$x+o,. "
+
+		if not upper_bounds:
 			n = len(chars)
 			upper_bounds = np.linspace(1/n, 1., n)
 
@@ -25,7 +28,7 @@ class Charset:
 
 class Translator:
 
-	def __init__(self, input_filename, charset=Charset("@#$x+o,.")):
+	def __init__(self, input_filename, charset=None):
 		self.input_filename = input_filename
 		self._load()
 		self.charset = charset
@@ -56,25 +59,49 @@ class Translator:
 def parse_arguments():
 	parser = argparse.ArgumentParser(description="Convert image file to ascii format.")
 
-	parser.add_argument("-b", "--boxsize", type=int, default=3, dest="boxsize", help="The size of pixel box per one character")
-	parser.add_argument("-c", "--correct", action="store_true", dest="correct", help="Correct boxsize for height/width of ascii characters")
-	parser.add_argument("-i", "--input-file", type=str, required=True, dest="input", help="The input filename")
-	parser.add_argument("-o", "--output-file", type=str, required=True, dest="output", help="The output filename")
+	parser.add_argument("-i", "--input-file", type=str, required=True, dest="input",
+	 help="The input filename")
+	
+	parser.add_argument("-o", "--output-file", type=str, required=True, dest="output",
+	 help="The output filename")
+
+	parser.add_argument("-b", "--boxsize", type=int, default=3, dest="boxsize",
+	 help="The size of pixel box per one character")
+	
+	parser.add_argument("--chars", type=str, dest="characters",
+	 help="Set the charset used (in the ascending order of intensity, e.g. \"@x.\")")
+
+	parser.add_argument("--upper-bounds", type=float, nargs="+", dest="upper_bounds",
+	 help="List of upper bounds (normalized intensity values) where to use the next character. The default are equally spaced values from 0 (exclusive) to 1 (inclusive)")
+
+	parser.add_argument("-c", "--correct", action="store_true", dest="correct",
+	 help="Correct boxsize for height/width of ascii characters")
+
+	parser.add_argument("-s", "--silent", action="store_true", dest="silent",
+	 help="Do not output additional information to stdout")
 	
 	args = parser.parse_args()
 	return args
 
 
+SILENT = False
+def log(text):
+	if not SILENT:
+		print(text)
+
 def main():
 	args = parse_arguments()
+	if args.silent:
+		global SILENT
+		SILENT = True
 	
 	x_boxsize = y_boxsize = args.boxsize
 	if args.correct:
 		y_boxsize = x_boxsize * 2
-		print("Corecting x_boxsize to %d" % x_boxsize)
+		log("Corecting x_boxsize to %d" % x_boxsize)
 
-	# c = Charset("#.", [0.32, 1])
-	t = Translator(args.input)
+	c = Charset(args.characters, args.upper_bounds)
+	t = Translator(args.input, c)
 	t.translate_to_file(args.output, x_boxsize, y_boxsize)
 
 
