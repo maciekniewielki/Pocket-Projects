@@ -98,7 +98,7 @@ def main():
 	x_boxsize = y_boxsize = args.boxsize
 	if args.correct:
 		y_boxsize = x_boxsize * 2
-		log("Corecting x_boxsize to %d" % x_boxsize)
+		log("Corecting y_boxsize to %d" % y_boxsize)
 
 	c = Charset(args.characters, args.upper_bounds)
 	t = Translator(args.input, c)
